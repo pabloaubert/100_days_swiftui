@@ -26,6 +26,17 @@ struct ContentView: View {
         return amountPerPerson
     }
     
+    var totalAmount: Double {
+        let tipSelection = Double(tipPercentage)
+        let tipValue = checkAmount / 100 * tipSelection
+        let grandTotal = checkAmount + tipValue
+        return grandTotal
+    }
+    
+    var currencyLocale: FloatingPointFormatStyle<Double>.Currency {
+        .currency(code: Locale.current.currencyCode ?? "EUR")
+    }
+    
     
     var body: some View {
         NavigationView {
@@ -34,7 +45,7 @@ struct ContentView: View {
                     // Get the "value" from the textfield in currency format (from system settings, or defaults to EUR)
                     // "Amount" is the placeholder
                     // Add modifier keyboardType to select specific keyboard to show
-                    TextField("Amount", value: $checkAmount, format: .currency(code: Locale.current.currencyCode ?? "EUR"))
+                    TextField("Amount", value: $checkAmount, format: currencyLocale)
                         .keyboardType(.decimalPad)
                         .focused($amountIsFocused)
                     Picker("Number of people", selection: $numberOfPeople) {
@@ -50,13 +61,23 @@ struct ContentView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+                    Picker("Tip percentage", selection: $tipPercentage) {
+                        ForEach(0..<101) {
+                            Text("\($0)%")
+                        }
+                    }
                 } header: {
                     Text("Tip amount")
                 }
                 Section {
-                    Text(totalPerPerson, format: .currency(code: Locale.current.currencyCode ?? "EUR"))
+                    Text(totalPerPerson, format: currencyLocale)
                 } header: {
                     Text("Total per person")
+                }
+                Section {
+                    Text(totalAmount, format: currencyLocale)
+                } header: {
+                    Text("Total")
                 }
             }
             .navigationTitle("WeSplit")
