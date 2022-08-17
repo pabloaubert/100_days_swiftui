@@ -7,15 +7,36 @@
 
 import SwiftUI
 
+
+struct LargeTitle: ViewModifier {
+  func body(content: Content) -> some View {
+    content
+      .font(.largeTitle)
+      .foregroundColor(.blue)
+      .padding()
+  }
+}
+
+extension View {
+  func largeTitleStyle() -> some View {
+    modifier(LargeTitle())
+  }
+}
+
+
 struct ContentView: View {
     var body: some View {
       // Modifier order matters
-      Button("Hello, world!") {
-        print(type(of: self.body))
+      VStack {
+          Text("Challenge 3")
+            .largeTitleStyle()
+          Button("Hello, world!") {
+            print(type(of: self.body))
+          }
+            .background(.red) // The red background only applies to the Button here
+            .frame(width: 200, height: 200)
+//              .background(.blue) // This applies to all 200x200 frame button
       }
-      .background(.red) // The red background only applies to the Button here
-      .frame(width: 200, height: 200)
-//      .background(.blue) // This applies to all 200x200 frame button
     }
 }
 
