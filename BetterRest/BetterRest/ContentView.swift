@@ -11,11 +11,38 @@ import SwiftUI
 struct ContentView: View {
   @State private var wakeUp = defaultWakeTime
   @State private var sleepAmount = 8.0
-  @State private var coffeeAmount = 1
+  @State private var coffeeAmount = 0
   
   @State private var alertTitle = ""
   @State private var alertMessage = ""
   @State private var showingAlert = false
+  
+  var resultBedtime: String {
+    var message: String
+    do {
+      let config = MLModelConfiguration()
+      let model = try SleepCalculator(configuration: config)
+
+      let components = Calendar.current.dateComponents([.hour, .minute], from: wakeUp)
+      let hour = (components.hour ?? 0) * 60 * 60
+      let minute = (components.minute ?? 0) * 60
+
+      
+      let prediction = try model.prediction(wake: Double(hour + minute), estimatedSleep: sleepAmount, coffee: Double(coffeeAmount + 1))
+
+      let sleepTime = wakeUp - prediction.actualSleep
+
+      let formatter = DateFormatter()
+      formatter.timeStyle = .short
+
+      message = formatter.string(from: sleepTime)
+    }
+    catch {
+        message = "Error calculating bedtime"
+    }
+
+    return message
+  }
   
   static var defaultWakeTime: Date {
     var components = DateComponents()
@@ -42,44 +69,32 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 0) {
           Text("Daily coffee intake")
             .font(.headline)
-          Stepper(coffeeAmount == 1 ? "1 cup" : "\(coffeeAmount) cups", value: $coffeeAmount, in: 1...20)
+//          Stepper(coffeeAmount == 1 ? "1 cup" : "\(coffeeAmount) cups", value: $coffeeAmount, in: 1...20)
+          Picker("Amount of coffee", selection: $coffeeAmount) {
+            ForEach(1..<21) {
+              Text("\($0) cups")
+            }
+          }.padding([.top, .bottom])
+        }
+        
+        Section(header: Text("Recommended bed time").font(.headline)) {
+          Text("\(resultBedtime)")
+            .frame(maxWidth: .infinity, alignment: .center)
+            .font(.title)
         }
       }
       .navigationTitle("BetterRest")
-      .toolbar {
-        Button("Calculate", action: calculateBedtime)
-      }
-      .alert(alertTitle, isPresented: $showingAlert) {
-        Button("OK") { }
-      } message: {
-        Text(alertMessage)
-      }
+//      .toolbar {
+//        Button("Calculate", action: calculateBedtime)
+//      }
+//      .alert(alertTitle, isPresented: $showingAlert) {
+//        Button("OK") { }
+//      } message: {
+//        Text(alertMessage)
+//      }
     }
   }
   
-  func calculateBedtime() {
-    do {
-      let config = MLModelConfiguration()
-      let model = try SleepCalculator(configuration: config)
-      
-      let components = Calendar.current.dateComponents([.hour, .minute], from: wakeUp)
-      let hourInSeconds = (components.hour ?? 0) * 60 * 60
-      let minuteInSeconds = (components.minute ?? 0) * 60
-      
-      let prediction = try model.prediction(wake: Double(hourInSeconds + minuteInSeconds), estimatedSleep: sleepAmount, coffee: Double(coffeeAmount))
-      
-      let sleepTime = wakeUp - prediction.actualSleep
-      alertTitle = "Your ideal bedtime is..."
-      alertMessage = sleepTime.formatted(date: .omitted, time: .shortened)
-      
-    } catch {
-      // Something went wrong!
-      alertTitle = "Error"
-      alertMessage = "Sorry, there was a problem calculating your bedtime"
-    }
-    
-    showingAlert = true
-  }
 }
 
 struct ContentView_Previews: PreviewProvider {
