@@ -9,6 +9,7 @@ import SwiftUI
 
 
 struct FlagImage: View {
+  
   var flagName: String
   var body: some View {
     Image(flagName)
@@ -25,11 +26,22 @@ struct ContentView: View {
   @State private var scoreTitle = ""
   @State private var count = 0
   
-  
   @State private var countries = ["Estonia", "France", "Germany", "Ireland", "Italy", "Nigeria", "Poland", "Russia", "Spain", "UK", "US"].shuffled()
   @State private var correctAnswer = Int.random(in: 0...2)
   @State private var totalScore = 0
-
+  
+  
+  // Animations (1)
+  @State private var spinAmounts = [0.0, 0.0, 0.0]
+  
+  // Animations (2)
+  @State private var animatingOpacity = false
+  @State private var tappedFlag = -1
+  
+  // Animations (3)
+  @State private var animatingScale = false
+  @State private var scaleAmount = 1.0
+  
   
   var body: some View {
     ZStack {
@@ -57,6 +69,9 @@ struct ContentView: View {
             } label: {
               FlagImage(flagName: countries[number])
             }
+            .rotation3DEffect(.degrees(spinAmounts[number]), axis: (x: 0, y: 1, z: 0))
+            .opacity(animatingOpacity ? (number == tappedFlag ? 1 : 0.25) : 1)
+            .scaleEffect(number == tappedFlag ? 1.0 : scaleAmount)
           }
         }
         .frame(maxWidth: .infinity)
@@ -86,6 +101,22 @@ struct ContentView: View {
   }
   
   func flagTapped(_ number: Int) {
+    
+    // Show animations (1)
+    withAnimation {
+      spinAmounts[number] += 360
+    }
+    
+    // Show animations (2)
+    withAnimation {
+      tappedFlag = number
+      animatingOpacity = true
+    }
+    
+    withAnimation(.default.repeatCount(3, autoreverses: true)) {
+      scaleAmount = 0.5
+    }
+    
     count += 1
     if number == correctAnswer {
       scoreTitle = "Correct"
@@ -103,6 +134,9 @@ struct ContentView: View {
   func askQuestion() {
     countries.shuffle()
     correctAnswer = Int.random(in: 0...2)
+    tappedFlag = -1
+    animatingOpacity = false
+    scaleAmount = 1.0
   }
   
   func resetGame() {
@@ -239,3 +273,13 @@ struct ContentView_Previews: PreviewProvider {
 //} message: {
 //  Text("Please read this")
 //}
+
+
+
+/*
+ Day 34 Challenge: Add animations
+ 
+ 1) When you tap a flag, make it spin around 360 degrees on the Y axis.
+ 2) Make the other two buttons fade out to 25% opacity.
+ 3) Add a third effect of your choosing to the two flags the user didn’t choose – maybe make them scale down? Or flip in a different direction? Experiment!
+ */
